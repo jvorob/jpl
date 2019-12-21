@@ -21,6 +21,12 @@ TODO-EVENTUAL:
 
 """
 
+VERBOSE = True
+
+def dprint(*args):
+    if VERBOSE:
+        print(*args)
+
 
 
 class Program:
@@ -265,6 +271,65 @@ def rewindStep(step):
     return step.prevStep
 
 
+def parseQuery(querystring):
+    " Parses out a query from the string. Throws on error "
+    strm = cls.ParseStream("goal :-" + querystring)
+    rule = cls._parseRule(strm)
+    cls._chomp(strm)
+    strm.assertNext(None)
+    return rule
+
+
+
+
+
+def fullInterp(program, querystring):
+    queryRule = cls._parseRule(cls.ParseStream("goal :-" + querystring))
+    firstStep = makeFirstStep(queryRule)
+
+    def printBindings():
+        for k,v in queryRule.bindings.items():
+            print("{} = {}".format(k, v))
+
+
+    curr = firstStep
+    while True:
+        nextStep = outerInterp(curr, program)
+
+        if nextStep is None:
+            print("no")
+            break
+
+        print("yes")
+        print(queryRule.body) #TEMP?
+        print(nextStep.strAll())
+        printBindings()
+        print("")
+        curr = nextStep
+
+
+def interactiveInterp(program):
+    "Prints a prompt and responds to user queries"
+
+    while True:
+        try:
+            queryStr = input("> ")
+        except EOFError:
+            break
+
+        #TODO: catch and retry
+
+        try:
+            queryRule = parseQuery(queryStr)
+        except Exception as e:
+            print("Failed to parse: " + str(e))
+            continue
+
+
+        fullInterp(program, queryStr)
+
+
+
 # ============================================================
 #
 #                 MANUAL TESTING SHENANIGANS
@@ -318,8 +383,23 @@ def testOuterInterp():
     a3 = outerInterp(a2, prog)
     print(a3)
 
+
+
+
+
+
+def testFull():
+    prog = Program.ParseString("true. foo(X) :- bar(X).  bar(a):- true. bar(b):- true.")
+
+    query = "bar(X)."
+
+    interactiveInterp(prog)
+
+
+
 if __name__ == "__main__":
     print("Testing in engine.py")
 
     #testStep()
-    testOuterInterp()
+    #testOuterInterp()
+    testFull()

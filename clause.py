@@ -33,6 +33,9 @@ NOTE: Creation conventions:
 """
 
 
+VERBOSE=True
+
+
 # ============================================================
 #
 #                 OBJECTS (Terms/Rules)
@@ -64,7 +67,7 @@ Vars should be bound to a rule instance (that's the binding context)
     def __repr__(self):
         return self.safeStr()
 
-    def safeStr(self, verbose=False, depth=10):
+    def safeStr(self, verbose=VERBOSE, depth=10):
         " Stringifies term, limits depth"
         if depth == 0:
             return "..."
@@ -100,7 +103,7 @@ class Functor(Term):
         return self.safeStr()
 
 
-    def safeStr(self, verbose=False, depth=10):
+    def safeStr(self, verbose=VERBOSE, depth=10):
         if depth == 0:
             return "..."
 
@@ -188,7 +191,7 @@ class Var(Term):
     def __repr__(self):
         return self.safeStr()
 
-    def safeStr(self, verbose=False, depth=10):
+    def safeStr(self, verbose=VERBOSE, depth=10):
         if depth == 0:
             return "..."
 
