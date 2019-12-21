@@ -1,4 +1,4 @@
-= JPL
+## JPL
 
 J. Prolog Interpreter
 (Any resemblance to other acronyms is purely coincidental)
@@ -6,16 +6,14 @@ J. Prolog Interpreter
 Interpreter for a very simple dialect of prolog:
 No integers, no cuts, no negation, no builtins (except `_` handling)
 
-Written as an academic project
-Inspired by the paper 'A Hitchiker's Guide to Reinventing a Prolog Machine', Paul Tarau, ICLP2017
+Written as an academic project. Inspired by the paper _'A Hitchiker's Guide to Reinventing a Prolog Machine'_, by Paul Tarau, ICLP2017
 
 
-=== To Run
+### To Run
 
-Run `python3 engine.py`
-Gives interactive shell. User enters queries, system responds with answers. To get more answers for the same query, type ';' and enter.
+Running `python3 engine.py` gives an interactive shell for a demo prolog program. The user enters queries, the system responds with answers. To get more answers for the same query, type ';' and enter.
 
-Can load programs with `python3 engine.py $FILE`
+Can load other prolog sources with `python3 engine.py $FILE`
 
 I've included some test programs with the code. Try them out like so:
 
@@ -31,13 +29,13 @@ python3 engine.py test_progs/arithmetic.jpl
 ```
 
 
-=== Notes:
+### Notes:
 
 It's pretty slow for nontrivial programs (no indexing)
 Watch out for infinite recursion
 
 
-=== Cool things:
+### Cool things:
 
 With the current design, it's almost possible to put variables into predicate or functor positions. e.g. something like `X(a).`, could return all unary predicates that are true of 'a'. Currently the parser doesn't handle this sort of case, but the execution loop is entirely capable of handling this, so it shouldn't be difficult to extend the language to support this.
 
