@@ -1,5 +1,6 @@
 import clause as cls
 import readline
+import sys
 
 VERSION = 0.1
 VERBOSE = True
@@ -433,7 +434,25 @@ def testOuterInterp():
 
 
 
+def runFile(fname):
+    try:
+        with open(fname) as f:
+            prog_text = f.read()
+    except:
+        print("Failed to read file '{}'".format(fname))
+        exit(1)
 
+    print("=== JPL {} ===". format(VERSION))
+    print("Loaded program from {}".format(fname))
+
+    try:
+        prog = Program.ParseString(prog_text)
+    except Exception as e:
+        print("Failed to parse program")
+        print(e)
+        return
+
+    interactiveInterp(prog)
 
 def runDemo():
     print("=== JPL {} ===". format(VERSION))
@@ -449,7 +468,6 @@ def runDemo():
         print(e)
         return
 
-
     interactiveInterp(prog)
 
 
@@ -461,11 +479,49 @@ foo(X) :- bar(X).
 bar(a).
 bar(b).
 % Try running `foo(X).`, or just `X.`
+% Some notes: there is no 'occurs' check: Try not to make infinite recursion
+% There are also no integers or things
 """
+
+
+
+def printUsage():
+    s = """
+    Usage: {} [-h] [FILE]
+    - With no args: runs a demo program
+    - With an arg: tries to load a prolog program from file
+    """
+    print(s)
+    exit(1);
+
+def main():
+    " Main entry point for normal operation "
+
+    num_args = len(sys.argv) - 1
+    
+    if num_args == 0:
+        runDemo()
+    elif num_args > 1:
+        printUsage()
+    elif sys.argv[1] in ["-h", "--help", "-?"]:
+        printUsage()
+
+    else: #1 arg: treat as a file
+        fname = sys.argv[1]
+
+        runFile(fname)
+
+    # Check the command line: 
+    # if no args: demo prog
+    # if help arg: printusage
+    # if 1 arg: try load file
+    # if many args: printusage
+
+
 
 
 if __name__ == "__main__":
 
     #testStep()
     #testOuterInterp()
-    runDemo()
+    main()

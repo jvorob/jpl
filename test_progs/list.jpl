@@ -1,0 +1,31 @@
+true.
+=(X,X).
+
+% === Some list constants for ease of demoing
+list1(
+    l(1,  l(2,  l(3, nil)))
+).
+
+
+% === Interesting predicated
+
+% last/2 (List, -Last)
+last(  l(X, nil), X).
+last(  l(Hd, Tl), X) :- last(Tl, X).
+
+
+%reverse_acc/3 (List, Acc, Rev)
+reverse_acc( nil, Acc, Acc).
+reverse_acc( l(Hd, Tl), Acc, Rev) :-
+    reverse_acc( Tl, l(Hd, Acc), Rev).   
+
+%reverse/2
+reverse(List, Rev) :- reverse_acc(List, nil, Rev).
+
+
+%subseq/2 - generates all possible subsequences
+subseq( nil, nil).
+subseq( l(Hd, Tl), l(Hd,Sub)) :- %Keep case
+    subseq(Tl, Sub).
+subseq( l(Hd, Tl), Sub) :- %Drop case
+    subseq(Tl, Sub).
