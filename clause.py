@@ -4,38 +4,38 @@
 """
 NOTES/TODO list:
 
+TODO:
+- AST: basic def
+- AST: make rule from AST
+- Term: Unify (returns bindings)
+- Term: undo bindings
+
+
+TODO-EVENTUAL:
+- Parse text to AST
+- List pretty-print
+- List parse
+- less-verbose printer (add verbose flag to terms)
+- Goal list / eval step (+pretty print)
+- Outer interp
+- Pre-unify
+
 
 A Term is a variable or an atom, possibly with children
-QUESTION: Do we special-case atoms or just have them be functor/0?
 
 Variables are a string key and a context (either the parent rule or a CTX object)
 
-A clause is just a term,
+A clause is just a term
+
 
 A rule is a head clause, followed by a list of body clauses
 + a context (which stores variables defined in that rule's clauses)
-QUESTION: do clauses carry a ptr to the rule/context?
-ANSWER: I think no, it's stored in the var, only needs to be updated on rule copy
-
-
-- Rule methods: copy (copies context)
-
-- Variable methods:  
-    - BindTo(term)
-    - Unbind
-    - Deref: (returns a term, if bound, or var, if unbound)
-
-- Term methods?: Unify(term) #updates bindings, returns T or F, returns list of bindings made?
-    - isVar?
-
-
 
 
 
 QUESTION: how to create rules/terms?
 - Term AST: tree of functor/var tokens
 - Rule AST: head termAST, list of body termAST
-
 
 
 NOTE: Creation conventions:
@@ -62,7 +62,13 @@ Vars should be bound to a rule instance (that's the binding context)
     # applies to vars but doesn't deref them
     # doesn't return anything rn
     def shallowMap(self, mapfun):
-        mapfun(self)
+        mapfun(self) # functor overrides this to recurse on children
+
+
+    def copy(self):
+        " Copies tree, stops at vars (copy's vars are unbound)"
+        assert False, "Don't call copy on Term class"
+
 
     def __repr__(self):
         return self.safeStr()
@@ -92,6 +98,13 @@ class Functor(Term):
         for child in self.subterms:
             mapfun(child)
 
+
+    def copy(self):
+        " Copies tree, stops at vars (copy's vars are unbound)"
+        childCopies = [s.copy() for s in self.subterms]
+        return Functor(self.token, childCopies)
+
+
     def __repr__(self):
         return self.safeStr()
 
@@ -116,6 +129,11 @@ class Var(Term):
         self.token = token
 
         self.context = None #Starts uninitialized
+
+
+    def copy(self):
+        " Copies tree, stops at vars (copy's vars are unbound)"
+        return Var(self.token)
 
     def deref(self):
         " Recursively dereferences self until reach nonvar or unbound var "
@@ -166,12 +184,18 @@ class Var(Term):
         if depth == 0:
             return "..."
 
+        # show context-less vars
+        if not isinstance(self.context, Rule):
+            return "(${}!!)".format(self.token)
+
+
+        # Show unbound vars
         boundval = self.deref()
         if isinstance(boundval, Var):
             return "(${}={})".format(self.token, boundval.token)
-        else:
-            # we have a functor
-            return "(${}={})".format(self.token,boundval.safeStr(depth-1))
+
+        # Else, we have a functor
+        return "(${}={})".format(self.token,boundval.safeStr(depth-1))
 
 
 class Rule:
@@ -192,12 +216,22 @@ class Rule:
             bclause.shallowMap(reparent)
 
 
+
+    def copy(self):
+        " Makes a copy: all variables in copy are unbound "
+
+        h2 = self.head.copy()
+        b2 = [b.copy() for b in self.body]
+
+        return Rule(h2, b2)
+
+
     def __repr__(self):
         msg = ""
         msg += "<Rule:\n"
         msg += "  HD: {}\n".format(str(self.head))
         msg += "  BODY: {}\n".format(", ".join(str(b) for b in self.body))
-        msg += "Vars:{}>".format(self.bindings)
+        msg += "  Vars:{}>".format(self.bindings)
         return msg
 
 
@@ -211,8 +245,6 @@ class Rule:
 
 
 def testSimpleTerms():
-
-
     f1 = Functor("a",[])
 
     v1 = Var("X")
@@ -230,9 +262,32 @@ def testSimpleTerms():
     print(f2)
     print(r)
 
+def testCopy():
+    f1 = Functor("a",[])
+
+    v1 = Var("X")
+    v2 = Var("Y")
+    v3 = Var("Y")
+
+    f2 = Functor("foo",[f1,v1,v2,v3])
+
+    r = Rule(f2, [v1, f1])
+
+    #v1.bindTo(f1)
+    v3.bindTo(v1)
+
+
+    r2 = r.copy()
+    # Bind X = a
+    r2.head.subterms[1].bindTo(r2.head.subterms[0])
+
+    print(r)
+    print(r2)
+
 
 
 if __name__ == "__main__":
     print("Hi")
 
-    testSimpleTerms()
+    #testSimpleTerms()
+    testCopy()
