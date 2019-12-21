@@ -442,17 +442,25 @@ def runDemo():
         print("    " + line)
     print()
 
-    prog = Program.ParseString(DEMO_PROGRAM)
+    try:
+        prog = Program.ParseString(DEMO_PROGRAM)
+    except Exception as e:
+        print("Failed to parse program")
+        print(e)
+        return
+
+
     interactiveInterp(prog)
 
 
 
 DEMO_PROGRAM = """
 true.
-=(X,X).
+=(X,X).  % This needs to be defined manually
 foo(X) :- bar(X).
 bar(a).
 bar(b).
+% Try running `foo(X).`, or just `X.`
 """
 
 

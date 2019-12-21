@@ -399,8 +399,8 @@ class ParseStream:
         raise Exception("ERROR: {}, at {}".format(error, str(self)))
 
     def __repr__(self):
-        context = self.str[self.offset: self.offset + 50]
-        if(len(self.str) >= self.offset + 50):
+        context = self.str[self.offset: self.offset + 20]
+        if(len(self.str) >= self.offset + 20):
             context += "..."
 
         return "<pos:{}, text:'{}'>".format(self.offset, context)
@@ -409,8 +409,26 @@ class ParseStream:
 
 
 def _chomp(strm):
-    while strm.peek() in [' ', '\n', '\t']:
+    while strm.peek() in [' ', '\r', '\n', '\t']:
         strm.drop()
+
+    if strm.peek() == '%':
+        _chompComment(strm)
+        _chomp(strm) #keep chomping after a comment, there might be more whitespace
+
+
+def _chompComment(strm):
+    " call at %, chomps to \n "
+    strm.assertNext('%')
+    strm.drop()
+
+    # chomp to newline
+    while strm.peek() not in ['\n', None]:
+        strm.drop()
+
+    strm.drop() #drop newline
+
+
 
 def _parseIdentChar(strm):
     "Consumes one char of identifier of [=?+*A-Za-z0-9_], else return None"
