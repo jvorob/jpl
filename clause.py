@@ -33,7 +33,7 @@ NOTE: Creation conventions:
 """
 
 
-VERBOSE=True
+VERBOSE=False  #it's the default for the Term safestr method
 
 
 # ============================================================
@@ -191,6 +191,21 @@ class Var(Term):
     def __repr__(self):
         return self.safeStr()
 
+
+    def nameWithId(self):
+        """ Returns something like X@1, to distinguish among copies of the same variable
+        Actually takes its number from its Rule.instanceId, which is set by pl executor
+        """
+
+        if self.context is None:
+            return self.token
+
+        if self.context.instanceId < 0:
+            return self.token
+
+        return "{}@{}".format(self.token, self.context.instanceId)
+        
+
     def safeStr(self, verbose=VERBOSE, depth=10):
         if depth == 0:
             return "..."
@@ -204,13 +219,13 @@ class Var(Term):
         boundval = self.deref()
         if isinstance(boundval, Var):
             if verbose:
-                return "(${}={})".format(self.token, boundval.token)
+                return "(${}={})".format(self.nameWithId(), boundval.nameWithId())
             else:
-                return boundval.token #TODO: add depth indicator?
+                return boundval.nameWithId() #TODO: add depth indicator?
 
         # Else, we have a functor
         if verbose:
-            return "(${}={})".format(self.token,boundval.safeStr(verbose, depth-1))
+            return "(${}={})".format(self.nameWithId(), boundval.safeStr(verbose, depth-1))
         else:
             return boundval.safeStr(verbose, depth-1)
 
@@ -232,6 +247,13 @@ class Rule:
         for bclause in self.body:
             bclause.shallowMap(reparent)
 
+
+        self.instanceId = -1 #Can be set to other values to distinguish among copies of vars
+
+
+    def setInstanceId(self,i):
+        " Is called by consumers of Rules (i.e. prolog executor)"
+        self.instanceId = i
 
 
     def copy(self):

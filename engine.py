@@ -155,8 +155,10 @@ def TakeStep(currStep, prog, startIndex = None):
             return None
 
         #see if we unify with tryclause
-        r = tryRule.copy()
-        succ, bindings = cls._tryUnify(r.head, firstGoal)
+        rCopy = tryRule.copy()
+        rCopy.setInstanceId(currStep.depth() + 1)
+
+        succ, bindings = cls._tryUnify(rCopy.head, firstGoal)
         if succ:
             break
 
@@ -177,12 +179,12 @@ def TakeStep(currStep, prog, startIndex = None):
     #print("Succeeded with rule:", tryRule)
     #print(tryRule.body)
 
-    newGoals = list(tryRule.body)
+    newGoals = list(rCopy.body)
     remainingGoals = currStep.goals[1:]
 
     # need to create new step: store rule, index, update goal list
     newStep = ExecutionStep(currStep, 
-            tryRule, index,
+            rCopy, index,
             bindings,
             newGoals + remainingGoals)
 
