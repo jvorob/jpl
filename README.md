@@ -19,8 +19,20 @@ I've included some test programs with the code. Try them out like so:
 
 ```
 python3 jpl.py test_progs/list.jpl
-> list1(L), reverse(L, Rev).
+> list1(L), reverse(L, R).
+    L = l(1, l(2, l(3, nil)))
+    R = l(3, l(2, l(1, nil)))
+
+    yes
+
 > list1(L), subseq(L, Sub).
+    L = l(1, l(2, l(3, nil)))
+    Sub = l(1, l(2, l(3, nil)));
+
+    L = l(1, l(2, l(3, nil)))
+    Sub = l(1, l(2, nil))
+
+    yes
 
 python3 jpl.py test_progs/arithmetic.jpl
 > showComposites(N, Div).
