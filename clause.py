@@ -188,6 +188,16 @@ class Var(Term):
         return deepvar 
 
 
+    def unbind(self):
+        " removes whatever binding this currently holds at this level (doesn't deref) "
+
+        assert isinstance(self.context, Rule), "ERROR: unbinding context-less Var"
+
+        # We don't have to be bound to a concrete value, but we shouldn't be a root unbound
+        assert self.token in self.context.bindings, "ERROR: unbinding root unbound var"
+
+        del self.context.bindings[self.token]
+
 
     def __repr__(self):
         return self.safeStr()
@@ -269,6 +279,7 @@ MUST ONLY BE CALLED ON INITIALIZED TERMS
     pass
 
 
+
 def _tryUnify(c1, c2):
     """
 Helper: attempts to unify clause1 onto clause2
@@ -316,7 +327,7 @@ Doesn't attempt to undo
             return True, bindings
                     
 
-    else: #At least one is a variable, need to do a binding
+    else: #=== At least one is a variable, need to do a binding
 
         if    not b1 and not b2: #both unbound, bind newer clause to older
             bindee, target = d1, d2
@@ -624,19 +635,34 @@ def testUnify2():
     print(r2)
 
 
-def testUnify2():
-    s1= "f(g(X), X)."
+def testUnifyUndo():
+    s1= "f(X, q(Z), Z, Z)."
     r1 = _parseRule(ParseStream(s1))
 
-    s2= "f(Y, Y)."
+    # S2 will fail, we'll retry with s3
+    s2= "f(g(Y), Y, b, a)."
     r2 = _parseRule(ParseStream(s2))
+
+    s3= "f(g(Y), Y, a, a)."
+    r3 = _parseRule(ParseStream(s3))
+
 
     succ, bindings = _tryUnify(r1.head, r2.head)
     print(succ)
     print("\n".join(b[1] for b in bindings))
 
-    print()
+    print("undoing...")
+
+    for b in reversed(bindings):
+        b[0].unbind()
+
+    print(r1)
     print(r2)
+    print(r3)
+
+    succ, bindings = _tryUnify(r1.head, r3.head)
+    print(succ)
+    print("\n".join(b[1] for b in bindings))
 
 
 if __name__ == "__main__":
@@ -647,4 +673,4 @@ if __name__ == "__main__":
 
     #testParse()
 
-    testUnify2()
+    testUnifyUndo()
