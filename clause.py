@@ -5,7 +5,6 @@
 NOTES/TODO list:
 
 
-
 A Term is a variable or an atom, possibly with children
 QUESTION: Do we special-case atoms or just have them be functor/0?
 
@@ -37,13 +36,33 @@ QUESTION: how to create rules/terms?
 - Term AST: tree of functor/var tokens
 - Rule AST: head termAST, list of body termAST
 
+
+
+NOTE: Creation conventions:
+
+- Variables are created WITHOUT A CONTEXT
+- HOWEVER: if a variable is derefed or bound without a context, we raise an exception
+- Rules must be created with terms already made,
+- Rule initializer binds all vars in tree
+
 """
 
 
 class Term:
     """ Represents a var or functor (or atom if functor/0) 
 Vars should be bound to a rule instance (that's the binding context)
+    ABSTRACT: don't instantiate
     """
+
+    def isVar(self):
+        return isinstance(self, Var)
+
+
+    # applies function to self & each subterm within self
+    # applies to vars but doesn't deref them
+    # doesn't return anything rn
+    def shallowMap(self, mapfun):
+        mapfun(self)
 
     def __repr__(self):
         return self.safeStr()
@@ -65,6 +84,13 @@ class Functor(Term):
         self.token = token
         self.subterms = list(subterms)
 
+    # applies function to self & each subterm within self
+    # applies to vars but doesn't deref them
+    # doesn't return anything rn
+    def shallowMap(self, mapfun):
+        mapfun(self)
+        for child in self.subterms:
+            mapfun(child)
 
     def __repr__(self):
         return self.safeStr()
@@ -84,32 +110,31 @@ class Functor(Term):
 
 
 class Var(Term):
-    def __init__(self, token, context):
-        " token is var name, context is Rule object "
+    def __init__(self, token):
+        " token is var name "
         super().__init__()
         self.token = token
-        assert isinstance(context, Rule)
-        self.context = context
+
+        self.context = None #Starts uninitialized
 
     def deref(self):
         " Recursively dereferences self until reach nonvar or unbound var "
         " If unbound, returned value is var"
 
+        assert isinstance(self.context, Rule), "ERROR: deref context-less Var"
+
         if self.token not in self.context.bindings:
-            return self #returns the deepest unbound var
+            return self # we're deepest unbound, return self
 
         # we're bound, deref once
         binding = self.context.bindings[self.token]
 
-        #TODO: put isVar into Term class
 
-        if not isinstance(binding, Var):
-            # If hit nonvar, we're done
+        if not binding.isVar(): # hit a concrete value, done
             return binding
         else:
             # If hit var, continue
             assert binding != self #this shouldn't happen, also we shouldn't get loops
-            # NOTE: must always bind deepest var in chain only for this to be true
 
             return binding.deref()
 
@@ -117,13 +142,16 @@ class Var(Term):
 
     def bindTo(self, term):
         " Binds self <= term, returns the var instance which got changed "
+
+        assert isinstance(self.context, Rule), "ERROR: binding context-less Var"
+
         # NOTE: binding is set on deepest var in chain
         # Ensures non-loops (I think), and ensures undoing preserves older structure
 
         # Get deepest bound var
         # NOTE: if deepvar is a Functor, then that means self was already bound
         deepvar = self.deref() 
-        assert isinstance(deepvar, Var), "Can't re-bind an already-bound var"
+        assert deepvar.isVar(), "Can't re-bind an already-bound var"
 
         # make binding & return the var that was updated
         deepvar.context.bindings[deepvar.token] = term
@@ -149,29 +177,62 @@ class Var(Term):
 class Rule:
     " Represents an instance of a rule (e.g. multiple invocations make multiple rule objs) "
 
-    def __init__(self):
+    def __init__(self, headClause, bodyClauses):
         self.bindings = {}
-        pass
+        self.head = headClause
+        self.body = bodyClauses
+
+        def reparent(term):
+            if term.isVar():
+                term.context = self
+
+        # Set self as context for all vars in head & body clauses
+        self.head.shallowMap(reparent)
+        for bclause in self.body:
+            bclause.shallowMap(reparent)
+
 
     def __repr__(self):
-        return "<Rule, Vars:{}>".format(self.bindings)
+        msg = ""
+        msg += "<Rule:\n"
+        msg += "  HD: {}\n".format(str(self.head))
+        msg += "  BODY: {}\n".format(", ".join(str(b) for b in self.body))
+        msg += "Vars:{}>".format(self.bindings)
+        return msg
+
+
+
+
+# ============================================================
+#
+#                 MANUAL TESTING SHENANIGANS
+#
+# ============================================================
+
+
+def testSimpleTerms():
+
+
+    f1 = Functor("a",[])
+
+    v1 = Var("X")
+    v2 = Var("Y")
+    v3 = Var("Y")
+
+    f2 = Functor("foo",[f1,v1,v2,v3])
+
+    r = Rule(f2, [v1, f1])
+
+    v1.bindTo(f1)
+    v3.bindTo(v1)
+
+
+    print(f2)
+    print(r)
+
 
 
 if __name__ == "__main__":
     print("Hi")
 
-    r = Rule()
-    print(r)
-
-
-    f1 = Functor("a",[])
-
-    v1 = Var("X", r)
-    v2 = Var("Y", r)
-    v3 = Var("Y", r)
-
-    f2 = Functor("foo",[f1,v1,v2,v3])
-
-    v1.bindTo(f1)
-    v3.bindTo(v1)
-    print(f2)
+    testSimpleTerms()
