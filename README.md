@@ -36,8 +36,9 @@ python3 jpl.py test_progs/list.jpl
 
 python3 jpl.py test_progs/arithmetic.jpl
 > showComposites(N, Div).
+    % ...
 > peano=(+(5,3), 8).
-
+    % ...
 ```
 
 
