@@ -11,18 +11,18 @@ Written as an academic project. Inspired by the paper _'A Hitchiker's Guide to R
 
 ### To Run
 
-Running `python3 engine.py` gives an interactive shell for a demo prolog program. The user enters queries, the system responds with answers. To get more answers for the same query, type ';' and enter.
+Running `python3 jpl.py` gives an interactive shell for a demo prolog program. The user enters queries, the system responds with answers. To get more answers for the same query, type ';' and enter.
 
-Can load other prolog sources with `python3 engine.py $FILE`
+Can load other prolog sources with `python3 jpl.py $FILE`
 
 I've included some test programs with the code. Try them out like so:
 
 ```
-python3 engine.py test_progs/list.jpl
+python3 jpl.py test_progs/list.jpl
 > list1(L), reverse(L, Rev).
 > list1(L), subseq(L, Sub).
 
-python3 engine.py test_progs/arithmetic.jpl
+python3 jpl.py test_progs/arithmetic.jpl
 > showComposites(N, Div).
 > peano=(+(5,3), 8).
 
