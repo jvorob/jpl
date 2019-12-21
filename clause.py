@@ -10,12 +10,12 @@ And the main interpreter (executes queries using rules and terms and things)
 NOTES/TODO list:
 
 TODO:
+- Add depth field to Rule, so vars can log and distinguish between instances
 
 
 TODO-EVENTUAL:
 - List pretty-print
 - List parse
-- less-verbose printer (add verbose flag to terms)
 
 
 A Term is a variable or a functor (with children or without (if atom))
@@ -64,7 +64,7 @@ Vars should be bound to a rule instance (that's the binding context)
     def __repr__(self):
         return self.safeStr()
 
-    def safeStr(self, depth=10):
+    def safeStr(self, verbose=False, depth=10):
         " Stringifies term, limits depth"
         if depth == 0:
             return "..."
@@ -100,15 +100,19 @@ class Functor(Term):
         return self.safeStr()
 
 
-    def safeStr(self, depth=10):
+    def safeStr(self, verbose=False, depth=10):
         if depth == 0:
             return "..."
 
         if len(self.subterms) == 0:
             return self.token
 
-        subtermstr = ", ".join(x.safeStr(depth-1) for x in self.subterms)
-        return "{}/{}({})".format(self.token, len(self.subterms), subtermstr)
+        subtermstr = ", ".join(x.safeStr(verbose, depth-1) for x in self.subterms)
+
+        if verbose:
+            return "{}/{}({})".format(self.token, len(self.subterms), subtermstr)
+        else:
+            return "{}({})".format(self.token, subtermstr)
 
 
     def shortname(self):
@@ -184,7 +188,7 @@ class Var(Term):
     def __repr__(self):
         return self.safeStr()
 
-    def safeStr(self, depth=10):
+    def safeStr(self, verbose=False, depth=10):
         if depth == 0:
             return "..."
 
@@ -196,10 +200,16 @@ class Var(Term):
         # Show unbound vars
         boundval = self.deref()
         if isinstance(boundval, Var):
-            return "(${}={})".format(self.token, boundval.token)
+            if verbose:
+                return "(${}={})".format(self.token, boundval.token)
+            else:
+                return boundval.token #TODO: add depth indicator?
 
         # Else, we have a functor
-        return "(${}={})".format(self.token,boundval.safeStr(depth-1))
+        if verbose:
+            return "(${}={})".format(self.token,boundval.safeStr(verbose, depth-1))
+        else:
+            return boundval.safeStr(verbose, depth-1)
 
 
 class Rule:

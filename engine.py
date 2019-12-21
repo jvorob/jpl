@@ -275,6 +275,8 @@ def testStep():
     s3_2 = TakeStep(s2_2, prog)
     print(s3_2)
 
+    print(queryRule)
+
 
 def testOuterInterp():
 
