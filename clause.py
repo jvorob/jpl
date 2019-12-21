@@ -10,44 +10,26 @@ And the main interpreter (executes queries using rules and terms and things)
 NOTES/TODO list:
 
 TODO:
-- Term: Unify (rewindf if fail)
-- Term: undo bindings
-- Goal list / eval step (+pretty print)
-- Parse goal? (how to represent goal)
 
 
 TODO-EVENTUAL:
 - List pretty-print
 - List parse
 - less-verbose printer (add verbose flag to terms)
-- Outer interp
-- Pre-unify
 
 
-A Term is a variable or an atom, possibly with children
-
+A Term is a variable or a functor (with children or without (if atom))
 Variables are a string key and a context (either the parent rule or a CTX object)
-
 A clause is just a term
-
 
 A rule is a head clause, followed by a list of body clauses
 + a context (which stores variables defined in that rule's clauses)
 
-
-
-QUESTION: how to create rules/terms?
-- Term AST: tree of functor/var tokens
-- Rule AST: head termAST, list of body termAST
-
-
 NOTE: Creation conventions:
-
 - Variables are created WITHOUT A CONTEXT
 - HOWEVER: if a variable is derefed or bound without a context, we raise an exception
 - Rules must be created with terms already made,
-- Rule initializer binds all vars in tree
-
+- Rule constructor binds all vars in its clauses
 """
 
 
@@ -502,7 +484,16 @@ def _parseFunctor(strm):
 
 
 def _parseRule(strm):
-    " Parse a rule of the form TERM. or TERM:- BODY, BODY, ... , ."
+    """ Parse a rule of the form TERM. or TERM:- BODY, BODY, ... , .
+    returns None if at EOF
+    """
+
+    # check if has head
+    _chomp(strm)
+    c = strm.peek()
+    if c is None:
+        return None
+    
 
     head = _parseTerm(strm)
 
@@ -666,7 +657,7 @@ def testUnifyUndo():
 
 
 if __name__ == "__main__":
-    print("Hi")
+    print("Testing in clause.py")
 
     #testSimpleTerms()
     #testCopy()
