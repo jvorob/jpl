@@ -1,4 +1,8 @@
 import clause as cls
+import readline
+
+VERSION = 0.1
+VERBOSE = True
 
 """
 Interpreter for jan prolog
@@ -21,7 +25,6 @@ TODO-EVENTUAL:
 
 """
 
-VERBOSE = True
 
 def dprint(*args):
     if VERBOSE:
@@ -313,22 +316,64 @@ def fullInterp(program, querystring):
 def interactiveInterp(program):
     "Prints a prompt and responds to user queries"
 
+    def printBindings():
+        " print all bindings, then stop on the last one (no \\n) "
+        lines = []
+        for k,v in queryRule.bindings.items():
+            lines.append("  {} = {}".format(k, v))
+
+        print("\n".join(lines), end='')
+
     while True:
+        #=== Get a valid query string
         try:
             queryStr = input("> ")
+            if not queryStr.strip(): #skip blanks
+                continue
+
+            queryRule = parseQuery(queryStr)
+
         except EOFError:
             break
-
-        #TODO: catch and retry
-
-        try:
-            queryRule = parseQuery(queryStr)
         except Exception as e:
-            print("Failed to parse: " + str(e))
+            print(str(e))  #Parse error
             continue
 
 
-        fullInterp(program, queryStr)
+        # === Ok, we got one:
+        curr = makeFirstStep(queryRule)
+        while True:
+            nextStep = outerInterp(curr, program)
+
+            if nextStep is None:
+                print("no")
+                break
+
+
+            #= If we made some variable bindings: show them
+            #= Then ask if user wants more answers
+            done = True
+            if len(queryRule.bindings)>0:
+                printBindings()
+                #print(queryRule.body) #TEMP?
+                #print(nextStep.strAll())
+
+                
+                # Check if user wants more answers
+                response = input()
+                if response.strip() != "": #non-whitespace means keep checking
+                    done = False
+
+
+            if done:
+                print("\nyes\n")
+                break #break out to query shell
+
+
+            # Else continue with rest of answer
+            curr = nextStep
+            print("")
+
 
 
 
@@ -390,18 +435,29 @@ def testOuterInterp():
 
 
 
-def testFull():
-    prog = Program.ParseString("true. foo(X) :- bar(X).  bar(a):- true. bar(b):- true.")
+def runDemo():
+    print("=== JPL {} ===". format(VERSION))
+    print("Running demo program:")
+    for line in DEMO_PROGRAM.splitlines():
+        print("    " + line)
+    print()
 
-    query = "bar(X)."
-
+    prog = Program.ParseString(DEMO_PROGRAM)
     interactiveInterp(prog)
 
 
 
+DEMO_PROGRAM = """
+true.
+=(X,X).
+foo(X) :- bar(X).
+bar(a).
+bar(b).
+"""
+
+
 if __name__ == "__main__":
-    print("Testing in engine.py")
 
     #testStep()
     #testOuterInterp()
-    testFull()
+    runDemo()

@@ -10,7 +10,7 @@ And the main interpreter (executes queries using rules and terms and things)
 NOTES/TODO list:
 
 TODO:
-- Add depth field to Rule, so vars can log and distinguish between instances
+- TODO: make it possible to have vars for predicates
 
 
 TODO-EVENTUAL:
@@ -453,7 +453,7 @@ def _parseTerm(strm):
 
     if c.isupper():
         return _parseVar(strm)
-    elif c.islower():
+    else:
         return _parseFunctor(strm)
 
 
