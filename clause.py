@@ -1,7 +1,12 @@
 # //python 3
+import re
 
 
 """
+Defines Clauses, Terms, Rules
+Will be used by higher-level modules like parser (creates rules),
+And the main interpreter (executes queries using rules and terms and things)
+
 NOTES/TODO list:
 
 TODO:
@@ -47,6 +52,12 @@ NOTE: Creation conventions:
 
 """
 
+
+# ============================================================
+#
+#                 OBJECTS (Terms/Rules)
+#
+# ============================================================
 
 class Term:
     """ Represents a var or functor (or atom if functor/0) 
@@ -235,6 +246,199 @@ class Rule:
         return msg
 
 
+# ============================================================
+#
+#                          PARSER
+#
+# ============================================================
+
+
+class ParseStream:
+    " Represents state of the parser through its input "
+
+    def __init__(self, instr):
+        self.str = instr
+        self.offset = 0
+
+    def peek(self):
+        " returns next char or None "
+        off = self.offset
+        return self.str[off] if off < len(self.str) else None
+
+    def drop(self):
+        self.offset += 1
+
+    def assertNext(self, c):
+        if self.peek() != c:
+            raise Exception("ERROR: expected next char '{}', at {}".format(c, str(self)))
+
+    def raiseErr(self, error=""):
+        raise Exception("ERROR: {}, at {}".format(error, str(self)))
+
+    def __repr__(self):
+        context = self.str[self.offset: self.offset + 50]
+        if(len(self.str) >= self.offset + 50):
+            context += "..."
+
+        return "<pos:{}, text:'{}'>".format(self.offset, context)
+
+
+
+
+def _chomp(strm):
+    while strm.peek() in [' ', '\n', '\t']:
+        strm.drop()
+
+def _parseIdentChar(strm):
+    "Consumes one char of identifier of [=?+*A-Za-z0-9_], else return None"
+    # DOESNT CHOMP
+    c = strm.peek()
+    if ((c is not None)) and re.match(r'[\-=?+*A-Za-z0-9_]', c):
+        strm.drop()
+        return c
+
+    else:
+        return None
+
+def _parseIdent(strm):
+    "Snags an identifier of identChars, or None if doesn't match"
+    # DOESNT CHOMP
+
+    result = ""
+    while True:
+        c = _parseIdentChar(strm)
+        if c is None:
+            break
+
+        result += c
+
+    if result == "":
+        return None
+
+    return result
+
+
+def _parseTerm(strm):
+    " We're expecting a term "
+
+    _chomp(strm)
+
+    #TODO:
+    # parens?
+
+    c = strm.peek()
+
+    if c.isupper():
+        return _parseVar(strm)
+    elif c.islower():
+        return _parseFunctor(strm)
+
+
+    # Else: neither
+    strm.raiseErr("expecting Term, got non-alpha char")
+
+
+def _parseVar(strm):
+    " We're at an uppercase letter: parse off a char"
+
+    ident = _parseIdent(strm)
+    if ident is None:
+        strm.raiseErr("Failed to get ident in _parseVar")
+
+    return Var(ident)
+
+def _parseFunctor(strm):
+    " We're at a lowercase letter: parse off a functor and subterms "
+
+    head_ident = _parseIdent(strm)
+    if head_ident is None:
+        strm.raiseErr("Failed to get ident in _parseFunctor")
+
+
+    # now need to parse subterms
+    _chomp(strm)
+
+    c = strm.peek()
+
+    # if '(', parse subterms, else is atom
+    if c != '(':
+        return Functor(head_ident, [])
+
+
+    children = []
+    # Else: we're in the child subterms
+    strm.drop() # drop the '('
+    while True:
+        _chomp(strm)
+
+        child = _parseTerm(strm)
+        children.append(child)
+
+        #Now: check if continue ',' or end ')'
+        _chomp(strm)
+        c = strm.peek()
+
+        if c == ',':
+            strm.drop() # drop the ','
+            continue
+
+        if c == ')':
+            strm.drop() # drop the ')'
+            break
+
+        strm.raiseErr("Parsing functor subterms, expected ',' or ')'")
+
+    # We've parsed all children
+    return Functor(head_ident, children)
+
+
+# === Rule parser
+
+
+def _parseRule(strm):
+    " Parse a rule of the form TERM. or TERM:- BODY, BODY, ... , ."
+
+    head = _parseTerm(strm)
+
+    # check if has body
+    _chomp(strm)
+    c = strm.peek()
+
+    # if '.' then it's a fact, if ":-" then it has a body
+    if c == '.':
+        strm.drop()
+        return Rule(head,[])
+
+    elif c != ':':
+        strm.raiseErr("Expected '.' or ':-' after rule head")
+
+    #else: we're in a "head :- b1, ..., bn ." rule
+    body = []
+    strm.drop() # drop the ':'
+    strm.assertNext('-')
+    strm.drop() # drop the '-'
+
+    while True:
+        _chomp(strm)
+        b = _parseTerm(strm)
+        body.append(b)
+
+        #Now: check if continue ',' or end '.'
+        _chomp(strm)
+        c = strm.peek()
+
+        if c == ',':
+            strm.drop() # drop the ','
+            continue
+
+        if c == '.':
+            strm.drop() # drop the '.'
+            break
+
+        strm.raiseErr("Parsing rule body clauses, expected ',' or '.'")
+
+
+    return Rule(head, body)
 
 
 # ============================================================
@@ -285,9 +489,18 @@ def testCopy():
     print(r2)
 
 
+def testParse():
+    s = " foo (X ,a, b(c,Y)):- f(g(Y)), baz."
+    strm = ParseStream(s)
+
+    res = _parseRule(strm)
+    print(res)
+
 
 if __name__ == "__main__":
     print("Hi")
 
     #testSimpleTerms()
-    testCopy()
+    #testCopy()
+
+    testParse()
