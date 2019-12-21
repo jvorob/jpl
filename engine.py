@@ -6,7 +6,7 @@ import clause as cls
 import readline
 import sys
 
-VERSION = 0.1
+VERSION = 0.2
 VERBOSE = False
 
 """
@@ -17,7 +17,6 @@ Uses rules/terms/unification from clause.py
 TODO:
 - Add a way to run a single query (from cmd line? from func?) (for testing)
 - Add some tests
-
 
 TODO-EVENTUAL:
 - Integrity check, all vars in step stack/rule stack should only be bound thru vars
@@ -31,6 +30,11 @@ def dprint(*args):
     if VERBOSE:
         print(*args)
 
+# ============================================================
+#
+#              MAIN PROLOG EXECUTION CODE
+#
+# ============================================================
 
 
 class Program:
@@ -60,6 +64,7 @@ class Program:
         Calling getRule with the same bookmark will yield the next rule
         When no more available, returns (None, bookmark)
         """
+        #TODO: all indexing fits in here, if we ever decide to add that
 
         if bookmark is None:
             bookmark = 0
@@ -79,8 +84,6 @@ class Program:
         return msg
 
 
-
-
 class ExecutionStep:
     """ Represents last completed step in the execution:
 
@@ -95,7 +98,6 @@ class ExecutionStep:
     - what is our current list of goals
 
     """
-
 
     def __init__(self, prevStep, currRule, ruleIndex, bindingsMade, goalList):
         self.prevStep = prevStep #is None for first query
@@ -197,14 +199,20 @@ def TakeStep(currStep, prog, startIndex = None):
 
 
 def outerInterp(state, prog):
+    """
+    Prolog interpreter "main loop"
+    Repeatedly tries to take a step until we run out of goals (answer)
+    or until we run out of valid rules to try
 
-    #Start from state, return an answer
-    #If called repeatedly, should return all answers in order
-    #If no more answers, returns None
+    Pushes a new step whenever possible, pops if a step runs out of options.
 
+    Returns next answer (as ExecutionStep), or None if all answers exhausted
+    Should be repeatedly called with the state obj it returned from the last invocation
+    """
 
     bookmark = None #for the current step, where do we leave off from
-    # Update this each time we push/pop/take a step
+    # Update this each time we push/pop
+    # If takeStep picks a dead-end, it will pop immediately and update the bookmark
 
     while True:
         # If we ever have an empty state (i.e. popped query), return None
@@ -286,33 +294,7 @@ def parseQuery(querystring):
     return rule
 
 
-
-
-
-def fullInterp(program, querystring):
-    queryRule = cls._parseRule(cls.ParseStream("goal :-" + querystring))
-    firstStep = makeFirstStep(queryRule)
-
-    def printBindings():
-        for k,v in queryRule.bindings.items():
-            print("{} = {}".format(k, v))
-
-
-    curr = firstStep
-    while True:
-        nextStep = outerInterp(curr, program)
-
-        if nextStep is None:
-            print("no")
-            break
-
-        print("yes")
-        print(queryRule.body) #TEMP?
-        print(nextStep.strAll())
-        printBindings()
-        print("")
-        curr = nextStep
-
+# =====
 
 def interactiveInterp(program):
     "Prints a prompt and responds to user queries"
@@ -343,6 +325,8 @@ def interactiveInterp(program):
 
         # === Ok, we got one:
         curr = makeFirstStep(queryRule)
+
+        # === Loop over each answer, until exhausted or user satisfied
         while True:
             nextStep = outerInterp(curr, program)
 
@@ -356,21 +340,17 @@ def interactiveInterp(program):
             done = True
             if len(queryRule.bindings)>0:
                 printBindings()
-
                 #print(queryRule.body) #TEMP?
                 dprint(nextStep.strAll())
-
                 
-                # Check if user wants more answers
+                #= Check if user wants more answers
                 response = input()
                 if response.strip() != "": #non-whitespace means keep checking
                     done = False
 
-
             if done:
                 print("\nyes\n")
                 break #break out to query shell
-
 
             # Else continue with rest of answer
             curr = nextStep
@@ -432,7 +412,36 @@ def testOuterInterp():
     a3 = outerInterp(a2, prog)
     print(a3)
 
+def testFullInterp(program, querystring):
+    queryRule = cls._parseRule(cls.ParseStream("goal :-" + querystring))
+    firstStep = makeFirstStep(queryRule)
 
+    def printBindings():
+        for k,v in queryRule.bindings.items():
+            print("{} = {}".format(k, v))
+
+
+    curr = firstStep
+    while True:
+        nextStep = outerInterp(curr, program)
+
+        if nextStep is None:
+            print("no")
+            break
+
+        print("yes")
+        print(queryRule.body) #TEMP?
+        print(nextStep.strAll())
+        printBindings()
+        print("")
+        curr = nextStep
+
+
+# ============================================================
+#
+#                        ENTRY POINTS
+#
+# ============================================================
 
 
 def runFile(fname):
@@ -471,8 +480,6 @@ def runDemo():
 
     interactiveInterp(prog)
 
-
-
 DEMO_PROGRAM = """
 true.
 =(X,X).  % This needs to be defined manually
@@ -483,7 +490,6 @@ bar(b).
 % Some notes: there is no 'occurs' check: Try not to make infinite recursion
 % There are also no integers or things
 """
-
 
 
 def printUsage():
@@ -509,20 +515,11 @@ def main():
 
     else: #1 arg: treat as a file
         fname = sys.argv[1]
-
         runFile(fname)
-
-    # Check the command line: 
-    # if no args: demo prog
-    # if help arg: printusage
-    # if 1 arg: try load file
-    # if many args: printusage
-
 
 
 
 if __name__ == "__main__":
-
     #testStep()
     #testOuterInterp()
     main()
