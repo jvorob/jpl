@@ -10,18 +10,16 @@ And the main interpreter (executes queries using rules and terms and things)
 NOTES/TODO list:
 
 TODO:
-- AST: basic def
-- AST: make rule from AST
-- Term: Unify (returns bindings)
+- Term: Unify (rewindf if fail)
 - Term: undo bindings
+- Goal list / eval step (+pretty print)
+- Parse goal? (how to represent goal)
 
 
 TODO-EVENTUAL:
-- Parse text to AST
 - List pretty-print
 - List parse
 - less-verbose printer (add verbose flag to terms)
-- Goal list / eval step (+pretty print)
 - Outer interp
 - Pre-unify
 
@@ -131,6 +129,9 @@ class Functor(Term):
         return "{}/{}({})".format(self.token, len(self.subterms), subtermstr)
 
 
+    def shortname(self):
+        " string like functor/3"
+        return "{}/{}".format(self.token, len(self.subterms))
 
 
 class Var(Term):
@@ -244,6 +245,100 @@ class Rule:
         msg += "  BODY: {}\n".format(", ".join(str(b) for b in self.body))
         msg += "  Vars:{}>".format(self.bindings)
         return msg
+
+# ============================================================
+#
+#                        UNIFICATION 
+#
+# ============================================================
+
+
+# NOTE: How do we store undo entries?
+# (boundVar, "nice string")
+
+
+def unify(c1, c2):
+    """ 
+Unifies clause1 onto clause2
+Returns list of bindings made
+If fails, undoes its own bindings, and returns None
+
+(for reference, c1 is the new clause (think it might not matter actually))
+MUST ONLY BE CALLED ON INITIALIZED TERMS
+"""
+    pass
+
+
+def _tryUnify(c1, c2):
+    """
+Helper: attempts to unify clause1 onto clause2
+Returns (success, bindingsMade)
+Doesn't attempt to undo
+
+#c1 is the newer clause, will be bound to c2 if both are vars
+    """
+
+
+    #C is for clause, d is for dereferenced, b is for bound?
+
+    #dereference them (if we bind them, we want to work with the deepest level of var pointer)
+    d1, d2 = c1, c2
+    if d1.isVar():
+        d1 = d1.deref()
+    if d2.isVar():
+        d2 = d2.deref()
+
+
+    # Check if theyre bound (var is bound if it derefs to a nonvar)
+    b1, b2 = not d1.isVar(), not d2.isVar()
+
+
+    # ======== Switch on functor/var
+
+    if b1 and b2: #===== both are bound (functors):
+        if d1.token != d2.token:
+            print("Unify failed: {} & {} name mismatch".format(d1.shortname(), d2.shortname()))
+            return (False, [])
+
+        if len(d1.subterms) != len(d2.subterms):
+            print("Unify failed: {} & {} arity mismatch".format(d1.shortname(), d2.shortname()))
+            return (False, [])
+
+        else: #recursively unify children
+            bindings = []
+            for a,b in zip(d1.subterms, d2.subterms):
+                (succ, sub_binds) = _tryUnify(a,b)
+                bindings += sub_binds
+
+                if not succ:
+                    return False, bindings
+
+            return True, bindings
+                    
+
+    else: #At least one is a variable, need to do a binding
+
+        if    not b1 and not b2: #both unbound, bind newer clause to older
+            bindee, target = d1, d2
+
+        elif  not b2 and b1: #only b2 is var, bind it
+            bindee, target = d2, d1
+    
+        elif  not b1 and b2: #only b1 is var, bind it
+            bindee, target = d1, d2
+        else:
+            raise Exception("ERROR: SHOULDNT GET HERE")
+
+
+        #Need to store which var the binding was made on,
+        #Also want to have a descriptive string for it
+        binding = ( bindee, "{} <= {}".format(str(bindee), str(target)))
+
+        bindee.bindTo(target) # (it'll do the deref chain twice, but whatever)
+
+        return (True, [binding])
+
+
 
 
 # ============================================================
@@ -441,6 +536,9 @@ def _parseRule(strm):
     return Rule(head, body)
 
 
+
+
+
 # ============================================================
 #
 #                 MANUAL TESTING SHENANIGANS
@@ -496,6 +594,50 @@ def testParse():
     res = _parseRule(strm)
     print(res)
 
+def testUnify1():
+    s1= "f(l(a,l(b,l(c,nil))), R)."
+    r1 = _parseRule(ParseStream(s1))
+
+    s2= "f(l(H1, l(H2, Tl)), Tl)."
+    r2 = _parseRule(ParseStream(s2))
+
+    succ, bindings = _tryUnify(r1.head, r2.head)
+    print(succ)
+    print("\n".join(b[1] for b in bindings))
+
+    print()
+    print(r2)
+
+
+def testUnify2():
+    s1= "f(l(a,l(b,l(c,nil))), q)."
+    r1 = _parseRule(ParseStream(s1))
+
+    s2= "f(l(a, l(H2, Tl)), Tl)."
+    r2 = _parseRule(ParseStream(s2))
+
+    succ, bindings = _tryUnify(r1.head, r2.head)
+    print(succ)
+    print("\n".join(b[1] for b in bindings))
+
+    print()
+    print(r2)
+
+
+def testUnify2():
+    s1= "f(g(X), X)."
+    r1 = _parseRule(ParseStream(s1))
+
+    s2= "f(Y, Y)."
+    r2 = _parseRule(ParseStream(s2))
+
+    succ, bindings = _tryUnify(r1.head, r2.head)
+    print(succ)
+    print("\n".join(b[1] for b in bindings))
+
+    print()
+    print(r2)
+
 
 if __name__ == "__main__":
     print("Hi")
@@ -503,4 +645,6 @@ if __name__ == "__main__":
     #testSimpleTerms()
     #testCopy()
 
-    testParse()
+    #testParse()
+
+    testUnify2()
