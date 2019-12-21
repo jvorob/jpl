@@ -37,6 +37,8 @@ NOTE: Creation conventions:
 
 VERBOSE=False  #it's the default for the Term safestr method
 
+class ParseError(Exception):
+    pass
 
 # ============================================================
 #
@@ -401,17 +403,17 @@ class ParseStream:
 
     def assertNext(self, c):
         if self.peek() != c:
-            raise Exception("ERROR: expected next char '{}', at {}".format(c, str(self)))
+            raise ParseError("ERROR: expected next char '{}', at {}".format(c, str(self)))
 
     def raiseErr(self, error=""):
-        raise Exception("ERROR: {}, at {}".format(error, str(self)))
+        raise ParseError("ERROR: {}, at {}".format(error, str(self)))
 
     def __repr__(self):
         context = self.str[self.offset: self.offset + 20]
         if(len(self.str) >= self.offset + 20):
             context += "..."
 
-        context = context.splitlines()[0] # Drop anything after a newline
+        #context = context.splitlines()[0] # Drop anything after a newline
 
         return "line:{} col:{}, \"{}\"".format(self.lineno, self.colno, context)
 

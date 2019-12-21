@@ -335,8 +335,8 @@ def interactiveInterp(program):
 
         except EOFError:
             break
-        except Exception as e:
-            print(str(e))  #Parse error
+        except cls.ParseError as e:
+            print(e)  #Parse error
             continue
 
 
@@ -447,7 +447,7 @@ def runFile(fname):
 
     try:
         prog = Program.ParseString(prog_text)
-    except Exception as e:
+    except cls.ParseError as e:
         print("Failed to parse program")
         print(e)
         return
@@ -463,7 +463,7 @@ def runDemo():
 
     try:
         prog = Program.ParseString(DEMO_PROGRAM)
-    except Exception as e:
+    except cls.ParseError as e:
         print("Failed to parse program")
         print(e)
         return
