@@ -13,10 +13,8 @@ And the main interpreter (executes queries using rules and terms and things)
 NOTES/TODO list:
 
 TODO:
-- Underscore for vars
 - Underscore special-cased to separate bindings
-- Better parsing errors
-- Parsing line numbers
+- Better parser error messages
 - List parse
 - List pretty-print
 - TODO: make it possible to have vars for predicates
@@ -483,7 +481,7 @@ def _parseTerm(strm):
 
     c = strm.peek()
 
-    if c.isupper():
+    if c.isupper() or c =='_':
         return _parseVar(strm)
     else:
         return _parseFunctor(strm)

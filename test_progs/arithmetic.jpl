@@ -37,7 +37,7 @@ modulo(A, Div, Res) :-
 
 % isComposite(+X, -Divisor) (peano numbers)
 isComposite(X, Div):-
-    peano(V_, Div), =(Div, s(s(V_2))), % integer >= 2
+    peano(_1, Div), =(Div, s(s(_2))), % integer >= 2
     lt(Div, X), %less than our test number
     modulo(X, Div, 0).
 
@@ -59,7 +59,7 @@ peano(9,  s(s(s(s(s(s(s(s(s(0)))))))))).
 peano(10, s(s(s(s(s(s(s(s(s(s(0))))))))))).
 
 
-isInt(X) :- peano(X, Q).
+isInt(X) :- peano(X, _).
 
 % == Lets try to implement something like arithmetic and expression evaluation!
 % is evaluates an expression recursively into peano form

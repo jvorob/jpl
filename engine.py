@@ -15,7 +15,8 @@ Interpreter for jan prolog
 Uses rules/terms/unification from clause.py
 
 TODO:
-
+- Add a way to run a single query (from cmd line? from func?) (for testing)
+- Add some tests
 
 
 TODO-EVENTUAL:
