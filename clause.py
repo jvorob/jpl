@@ -300,11 +300,11 @@ Doesn't attempt to undo
 
     if b1 and b2: #===== both are bound (functors):
         if d1.token != d2.token:
-            print("Unify failed: {} & {} name mismatch".format(d1.shortname(), d2.shortname()))
+            #print("Unify failed: {} & {} name mismatch".format(d1.shortname(), d2.shortname()))
             return (False, [])
 
         if len(d1.subterms) != len(d2.subterms):
-            print("Unify failed: {} & {} arity mismatch".format(d1.shortname(), d2.shortname()))
+            #print("Unify failed: {} & {} arity mismatch".format(d1.shortname(), d2.shortname()))
             return (False, [])
 
         else: #recursively unify children

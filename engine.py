@@ -112,6 +112,17 @@ class ExecutionStep:
 
         return msg
 
+    def strAll(self):
+        " Returns a string of all levels to root "
+
+        msg = ""
+
+        if self.prevStep is not None:
+            msg = self.prevStep.strAll()
+
+        msg = str(self) +"\n" + msg
+        return msg
+
 
 
 def TakeStep(currStep, prog, startIndex = None):
@@ -133,6 +144,9 @@ def TakeStep(currStep, prog, startIndex = None):
     while True:
 
         #print("Trying rule:", tryRule)
+        # check for end
+        if tryRule is None:
+            return None
 
         #see if we unify with tryclause
         r = tryRule.copy()
@@ -149,16 +163,13 @@ def TakeStep(currStep, prog, startIndex = None):
         # Get next rule to continue from
         tryRule, index = prog.getRule(index)
 
-        # check for end
-        if tryRule is None:
-            return None
 
 
     # === We've successfully unified with the head of tryRule
     # Create a step to represent this
 
-    print("Succeeded with rule:", tryRule)
-    print(tryRule.body)
+    #print("Succeeded with rule:", tryRule)
+    #print(tryRule.body)
 
     newGoals = list(tryRule.body)
     remainingGoals = currStep.goals[1:]
@@ -173,43 +184,53 @@ def TakeStep(currStep, prog, startIndex = None):
 
 
 
-#def outerInterp(state):
-#
-#    #Start from state, return an answer
-#    #If called repeatedly, should return all answers in order
-#    #If no more answers, returns None
-#
-#
-#    while True:
-#        # If we ever have an empty state (i.e. popped query), return None
-#        if state is None:
-#            return None
-#
-#        # If we have empty goallist, it's from a prev answer, so need to pop
-#        if len(state.goals) == 0:
-#            #TODO: pop last step, since we've already seen that answer
-#            continue
-#
-#
-#        # Try to make progress towards one of our goals
-#        nextState = TakeStep(state)
-#
-#        # If no way to make progress, pop stack
-#        if nextState is None:
-#            #TODO: pop
-#            continue
-#        
-#
-#        #ELSE: we successfully took a step and made progress
-#        state = nextState
-#
-#        #check if it's an answer (we return here, and discard on reentry)
-#        if len(state.goals) == 0:
-#            return state
-#
-#        
-#        # We took a step, made progress, and aren't done yet
-#        continue
+def outerInterp(state, prog):
+
+    #Start from state, return an answer
+    #If called repeatedly, should return all answers in order
+    #If no more answers, returns None
+
+
+    bookmark = None #for the current step, where do we leave off from
+    # Update this each time we push/pop/take a step
+
+    while True:
+        # If we ever have an empty state (i.e. popped query), return None
+        if state is None:
+            return None
+
+        # If we have empty goallist, it's from a prev answer, so need to pop
+        if len(state.goals) == 0:
+            # Pop: store bookmark to continue from & destroy the step
+            bookmark = state.ruleIndex
+            state = rewindStep(state)
+            continue
+
+        # ======= THERE IS YET WORK TO BE DONE
+
+        # Try to make progress towards one of our goals
+        nextState = TakeStep(state, prog, bookmark)
+
+        # If no way to make progress forward, need to retry the currentStep
+        if nextState is None:
+
+            #We're instead retrying the current step, so load its bookmark and pop stack
+            bookmark = state.ruleIndex
+            state = rewindStep(state)
+            continue
+        
+
+        #ELSE: we successfully took a step and made progress
+        state = nextState
+        bookmark = None #start from beginning for the next step
+
+        #check if it's an answer (we return here, and discard on reentry)
+        if len(state.goals) == 0:
+            return state
+
+        
+        # We took a step, made progress, and aren't done yet
+        continue
 
 
 
@@ -280,13 +301,25 @@ def testStep():
 
 def testOuterInterp():
 
-    prog = Program.ParseString("foo(X) :- bar(X).  bar(a).")
+    prog = Program.ParseString("true. foo(X) :- bar(X).  bar(a):- true. bar(b):- true.")
+    queryRule = cls._parseRule(cls.ParseStream("goal :- bar(X)."))
+    firstStep = makeFirstStep(queryRule)
 
-    print(prog)
 
+    a1 = outerInterp(firstStep, prog)
+
+    print(a1.strAll())
+    print(queryRule)
+
+    a2 = outerInterp(a1, prog)
+    print(a2.strAll())
+    print(queryRule)
+
+    a3 = outerInterp(a2, prog)
+    print(a3)
 
 if __name__ == "__main__":
     print("Testing in engine.py")
 
-    testStep()
-    #testOuterInterp()
+    #testStep()
+    testOuterInterp()
