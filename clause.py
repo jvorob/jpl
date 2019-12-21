@@ -13,6 +13,8 @@ And the main interpreter (executes queries using rules and terms and things)
 NOTES/TODO list:
 
 TODO:
+- Underscore for vars
+- Underscore special-cased to separate bindings
 - Better parsing errors
 - Parsing line numbers
 - List parse
