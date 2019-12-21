@@ -96,7 +96,7 @@ class Functor(Term):
     def shallowMap(self, mapfun):
         mapfun(self)
         for child in self.subterms:
-            mapfun(child)
+            child.shallowMap(mapfun)
 
 
     def copy(self):
