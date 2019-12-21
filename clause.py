@@ -384,6 +384,8 @@ class ParseStream:
     def __init__(self, instr):
         self.str = instr
         self.offset = 0
+        self.lineno = 1
+        self.colno = 1
 
     def peek(self):
         " returns next char or None "
@@ -391,6 +393,10 @@ class ParseStream:
         return self.str[off] if off < len(self.str) else None
 
     def drop(self):
+        if self.peek() == '\n':
+            self.lineno += 1
+            self.colno = 1
+
         self.offset += 1
 
     def assertNext(self, c):
@@ -405,7 +411,9 @@ class ParseStream:
         if(len(self.str) >= self.offset + 20):
             context += "..."
 
-        return "<pos:{}, text:'{}'>".format(self.offset, context)
+        context = context.splitlines()[0] # Drop anything after a newline
+
+        return "line:{} col:{}, \"{}\"".format(self.lineno, self.colno, context)
 
 
 
