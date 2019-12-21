@@ -1,3 +1,7 @@
+# Janet Vorobyeva
+# 2019.12
+
+# (python3)
 import clause as cls
 import readline
 import sys
@@ -11,15 +15,10 @@ Interpreter for jan prolog
 Uses rules/terms/unification from clause.py
 
 TODO:
-- Goal list / eval step (+pretty print)
-- Outer interp
-- Parse goal? (how to represent goal)
-- Pre-unify
 
 
 
 TODO-EVENTUAL:
-- Distinguish between instances of variables
 - Integrity check, all vars in step stack/rule stack should only be bound thru vars
   also within the stack
 - Indexing: let Program do some smart filtering

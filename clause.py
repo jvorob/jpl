@@ -1,4 +1,7 @@
-# //python 3
+# Janet Vorobyeva
+# 2019.12
+# 
+# (python3)
 import re
 
 
@@ -10,12 +13,11 @@ And the main interpreter (executes queries using rules and terms and things)
 NOTES/TODO list:
 
 TODO:
-- TODO: make it possible to have vars for predicates
-
-
-TODO-EVENTUAL:
-- List pretty-print
+- Better parsing errors
+- Parsing line numbers
 - List parse
+- List pretty-print
+- TODO: make it possible to have vars for predicates
 
 
 A Term is a variable or a functor (with children or without (if atom))
