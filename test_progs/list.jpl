@@ -18,7 +18,7 @@ list1(
 
 % last/2 (List, -Last)
 last(  l(X, nil), X).
-last(  l(Hd, Tl), X) :- last(Tl, X).
+last(  l(_, Tl), X) :- last(Tl, X).
 
 
 %reverse_acc/3 (List, Acc, Rev)
@@ -34,5 +34,5 @@ reverse(List, Rev) :- reverse_acc(List, nil, Rev).
 subseq( nil, nil).
 subseq( l(Hd, Tl), l(Hd,Sub)) :- %Keep case
     subseq(Tl, Sub).
-subseq( l(Hd, Tl), Sub) :- %Drop case
+subseq( l(_, Tl), Sub) :- %Drop case
     subseq(Tl, Sub).

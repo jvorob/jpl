@@ -37,7 +37,7 @@ modulo(A, Div, Res) :-
 
 % isComposite(+X, -Divisor) (peano numbers)
 isComposite(X, Div):-
-    peano(_1, Div), =(Div, s(s(_2))), % integer >= 2
+    peano(_, Div), =(Div, s(s(_))), % integer >= 2
     lt(Div, X), %less than our test number
     modulo(X, Div, 0).
 

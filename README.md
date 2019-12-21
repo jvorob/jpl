@@ -4,7 +4,7 @@ J. Prolog Interpreter
 (Any resemblance to other acronyms is purely coincidental)
 
 Interpreter for a very simple dialect of prolog:
-No integers, no cuts, no negation, no builtins
+No integers, no cuts, no negation, no builtins (except `_` handling)
 
 Written as an academic project
 Inspired by the paper 'A Hitchiker's Guide to Reinventing a Prolog Machine', Paul Tarau, ICLP2017
@@ -35,7 +35,6 @@ python3 engine.py test_progs/arithmetic.jpl
 
 It's pretty slow for nontrivial programs (no indexing)
 Watch out for infinite recursion
-'\_' variables aren't special-cased, multiple underscore vars will share a binding
 
 
 === Cool things:

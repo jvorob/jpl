@@ -13,7 +13,6 @@ And the main interpreter (executes queries using rules and terms and things)
 NOTES/TODO list:
 
 TODO:
-- Underscore special-cased to separate bindings
 - Better parser error messages
 - List parse
 - List pretty-print
@@ -168,6 +167,9 @@ class Var(Term):
 
         assert isinstance(self.context, Rule), "ERROR: binding context-less Var"
 
+        if(self.token == "_"):
+            return
+
         # NOTE: binding is set on deepest var in chain
         # Ensures non-loops (I think), and ensures undoing preserves older structure
 
@@ -185,6 +187,8 @@ class Var(Term):
         " removes whatever binding this currently holds at this level (doesn't deref) "
 
         assert isinstance(self.context, Rule), "ERROR: unbinding context-less Var"
+        if(self.token == "_"):
+            return
 
         # We don't have to be bound to a concrete value, but we shouldn't be a root unbound
         assert self.token in self.context.bindings, "ERROR: unbinding root unbound var"
@@ -349,6 +353,10 @@ Doesn't attempt to undo
                     
 
     else: #=== At least one is a variable, need to do a binding
+
+        # '_' var is special-cased, always succeeds, dont' need to unbind
+        if d1.token == "_" or d2.token == "_":
+            return (True, [])
 
         if    not b1 and not b2: #both unbound, bind newer clause to older
             bindee, target = d1, d2
