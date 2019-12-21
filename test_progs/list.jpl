@@ -1,3 +1,10 @@
+% Test program for standard list things
+%
+% Try running `list1(L), reverse(L, Rev).`
+% Try running `list1(L), subseq(L, Sub).`
+%
+
+
 true.
 =(X,X).
 
@@ -17,7 +24,7 @@ last(  l(Hd, Tl), X) :- last(Tl, X).
 %reverse_acc/3 (List, Acc, Rev)
 reverse_acc( nil, Acc, Acc).
 reverse_acc( l(Hd, Tl), Acc, Rev) :-
-    reverse_acc( Tl, l(Hd, Acc), Rev).   
+    reverse_acc( Tl, l(Hd, Acc), Rev).
 
 %reverse/2
 reverse(List, Rev) :- reverse_acc(List, nil, Rev).

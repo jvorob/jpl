@@ -1,0 +1,85 @@
+% Test program for arithmetic shenanigans
+%
+% Try running `showComposites(N, Div).`
+% Try running `peano=(+(5,3), 8).`
+%
+
+
+true.
+=(X,X).
+
+inc(X, s(X)).
+dec(s(X), X).
+
+add(0, B, B).
+add(s(A), B, s(Res)) :- add(A, B, Res).
+
+% Subtract (A-B) with clamp-to-zero
+sub(A, 0, A). % subtract 0 does nothing
+sub(0, s(Q), 0). % clamp to 0
+sub(s(A), s(B), Res):- sub(A, B, Res).
+
+
+% comparisons
+leq(A, B) :- sub(A, B, 0).
+geq(A, B) :- sub(B, A, 0).
+
+lt(A, B) :- inc(A, A1), leq(A1, B).
+gt(A, B) :- lt(B, A).
+
+
+modulo(A, Div, A) :- lt(A,Div).
+modulo(A, Div, Res) :- 
+    geq(A,Div),
+    sub(A, Div, A_next),
+    modulo(A_next, Div, Res).
+    
+
+% isComposite(+X, -Divisor) (peano numbers)
+isComposite(X, Div):-
+    peano(V_, Div), =(Div, s(s(V_2))), % integer >= 2
+    lt(Div, X), %less than our test number
+    modulo(X, Div, 0).
+
+showComposites(N, Div) :-
+    peano(N, PN), isComposite(PN, PDiv), peano(Div, PDiv).
+
+
+%constants
+peano(0,  0).
+peano(1,  s(0)).
+peano(2,  s(s(0))).
+peano(3,  s(s(s(0)))).
+peano(4,  s(s(s(s(0))))).
+peano(5,  s(s(s(s(s(0)))))).
+peano(6,  s(s(s(s(s(s(0))))))).
+peano(7,  s(s(s(s(s(s(s(0)))))))).
+peano(8,  s(s(s(s(s(s(s(s(0))))))))).
+peano(9,  s(s(s(s(s(s(s(s(s(0)))))))))).
+peano(10, s(s(s(s(s(s(s(s(s(s(0))))))))))).
+
+
+isInt(X) :- peano(X, Q).
+
+% == Lets try to implement something like arithmetic and expression evaluation!
+% is evaluates an expression recursively into peano form
+
+% Constants
+is(X, Res) :- peano(X, Res).
+
+% Addition
+is(+(X, Y), Res) :-
+    is(X, Xv), is(Y, Yv),
+    add(Xv, Yv, Res).
+
+is(-(X, Y), Res) :-
+    is(X, Xv), is(Y, Yv),
+    sub(Xv, Yv, Res).
+
+% === 
+%  peano=/2 compares two expression after evaluating with is/2
+peano=(X, Y) :-
+    is(X, Xv), is(Y, Yv),
+    =(Xv, Yv).
+
+

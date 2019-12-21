@@ -441,10 +441,10 @@ def _chompComment(strm):
 
 
 def _parseIdentChar(strm):
-    "Consumes one char of identifier of [=?+*A-Za-z0-9_], else return None"
+    "Consumes one char of identifier of [=?+*<>/A-Za-z0-9_], else return None"
     # DOESNT CHOMP
     c = strm.peek()
-    if ((c is not None)) and re.match(r'[\-=?+*A-Za-z0-9_]', c):
+    if ((c is not None)) and re.match(r'[\-=?+<>/\*A-Za-z0-9_]', c):
         strm.drop()
         return c
 

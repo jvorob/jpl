@@ -7,7 +7,7 @@ import readline
 import sys
 
 VERSION = 0.1
-VERBOSE = True
+VERBOSE = False
 
 """
 Interpreter for jan prolog
@@ -355,8 +355,9 @@ def interactiveInterp(program):
             done = True
             if len(queryRule.bindings)>0:
                 printBindings()
+
                 #print(queryRule.body) #TEMP?
-                #print(nextStep.strAll())
+                dprint(nextStep.strAll())
 
                 
                 # Check if user wants more answers
